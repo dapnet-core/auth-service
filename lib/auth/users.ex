@@ -67,20 +67,24 @@ defmodule Auth.Users do
 
   defp login(conn) do
     {:ok, body, conn} = read_body(conn)
-    params = Poison.decode!(body)
-    user = Map.get(params, "username")
-    pass = Map.get(params, "password")
+    case Poison.decode(body) do
+      {:ok, params} ->
+        user = Map.get(params, "username")
+        pass = Map.get(params, "password")
 
-    db = Auth.CouchDB.db("users")
-    case CouchDB.Database.get(db, user) do
-      {:ok, result} ->
-        user = result |> Poison.decode!
-        {hash, user} = user |> Map.pop("password")
+        db = Auth.CouchDB.db("users")
+        case CouchDB.Database.get(db, user) do
+          {:ok, result} ->
+            user = result |> Poison.decode!
+            {hash, user} = user |> Map.pop("password")
 
-        if hash && Comeonin.Bcrypt.checkpw(pass, hash) do
-          {user, conn}
-        else
-          {nil, conn}
+            if hash && Comeonin.Bcrypt.checkpw(pass, hash) do
+              {user, conn}
+            else
+              {nil, conn}
+            end
+          _ ->
+            {nil, conn}
         end
       _ ->
         {nil, conn}
