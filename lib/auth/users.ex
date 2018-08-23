@@ -1,6 +1,8 @@
 defmodule Auth.Users do
   use Plug.Router
 
+  plug Auth.Plug.Api
+
   plug :match
   plug :dispatch
 
