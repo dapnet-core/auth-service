@@ -124,17 +124,30 @@ defmodule Auth.Permissions do
     %{}
   end
 
+
+  def all(roles) do
+    List.foldl roles, %{}, fn role, permissions ->
+      Map.merge(permissions, get(role), fn _k, a, b ->
+        highest_permission a, b
+      end)
+    end
+  end
+
   def query(roles, action) do
     Enum.reduce roles, :none, fn role, perm ->
       role_perm = Map.get(get(role), action, :none)
-      case {perm, role_perm} do
-        {:all, _} -> :all
-        {_, :all} -> :all
-        {:none, :if_owner} -> :if_owner
-        {:limited, :if_owner} -> :if_owner
-        {:none, :limited} -> :limited
-        _ -> perm
-      end
+      highest_permission perm, role_perm
+    end
+  end
+
+  def highest_permission(a, b) do
+    case {a, b} do
+      {:all, _} -> :all
+      {_, :all} -> :all
+      {:none, :if_owner} -> :if_owner
+      {:limited, :if_owner} -> :if_owner
+      {:none, :limited} -> :limited
+      _ -> a
     end
   end
 end

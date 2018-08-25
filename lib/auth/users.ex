@@ -15,9 +15,12 @@ defmodule Auth.Users do
     {user, conn} = login(conn)
 
     if user do
+      roles = Map.get(user, "roles")
+      permissions = Auth.Permissions.all(roles)
+
       response = %{
         user: user,
-        permissions: ["user.create", "user.delete"],
+        permissions: permissions
       }
 
       send_resp(conn, 200, Poison.encode!(response))
