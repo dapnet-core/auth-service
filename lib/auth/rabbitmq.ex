@@ -40,6 +40,30 @@ defmodule Auth.RabbitMQ do
             send_resp(conn, 200, "deny")
         end
 
+      "thirdparty-" <> user ->
+        db = Auth.CouchDB.db("users")
+
+        case CouchDB.Database.get(db, user) do
+          {:ok, result} ->
+            user = result |> Poison.decode!
+            {hash, user} = user |> Map.pop("password")
+
+            if hash && Comeonin.Bcrypt.checkpw(pass, hash) do
+              is_thirdparty = Map.get(user, "roles", [])
+              |> Enum.any?(fn role -> String.starts_with?(role, "thirdparty.") end)
+
+              if is_thirdparty do
+                send_resp(conn, 200, "allow")
+              else
+                send_resp(conn, 200, "deny")
+              end
+            else
+              send_resp(conn, 200, "deny")
+            end
+          _ ->
+            send_resp(conn, 200, "deny")
+        end
+
      _ -> send_resp(conn, 200, "deny")
     end
   end

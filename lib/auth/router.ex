@@ -4,7 +4,6 @@ defmodule Auth.Router do
   plug :match
   plug :dispatch
 
-
   forward "/auth/rabbitmq", to: Auth.RabbitMQ
   forward "/auth/users", to: Auth.Users
 end
